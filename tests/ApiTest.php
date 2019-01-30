@@ -8,6 +8,9 @@
 
 namespace App\Test;
 
+use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
+use Doctrine\Common\DataFixtures\Loader;
+use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\DataFixtures\TeamFixtures;
 
@@ -21,13 +24,20 @@ class ApiTest extends WebTestCase
         parent::setUp(); //
         $this->client = static::createClient();
         $container = $this->client->getContainer();
-        $doctrine = $container->get('doctrine');
-        $entityManager = $doctrine->getManager();
-        $this->em=$entityManager;
+        $entityManager = $container->get('doctrine')->getManager();
 
 
-        $fixture = new TeamFixtures();
-        $fixture->load($entityManager);
+        $loader = new Loader();
+        $loader->addFixture(new TeamFixtures());
+
+        $purger = new ORMPurger();
+        $purger->setPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE);
+        $executor = new ORMExecutor($entityManager, $purger);
+        $executor->purge();
+        $entityManager->getConnection()->exec("delete from sqlite_sequence where name='team';");
+        $entityManager->getConnection()->exec("delete from sqlite_sequence where name='league';");
+        $executor->execute($loader->getFixtures(), true);
+
 
     }
     /*
@@ -57,23 +67,65 @@ class ApiTest extends WebTestCase
             ),
             'the "Content-Type" header is "application/json"' // optional message shown on failure
         );
-
-
-
-
-
-
     }
 
+        public function testCreateTeam()
+        {
+            $postdata=array('name'=>"Test Team",'strip'=>"Some Strip");
+            $this->client->request('POST', '/api/createteam/2',$postdata);
+            $response = $this->client->getResponse();
+            $this->assertTrue(
+                $response->isSuccessful(),
+                'response status is 2xx'
+            );
 
-    public function testSetUp()
+            $this->assertTrue(
+                $response->headers->contains(
+                    'Content-Type',
+                    'application/json'
+                ),
+                'the "Content-Type" header is "application/json"' // optional message shown on failure
+            );
+        }
+
+    public function testUpdateTeamBadData()
     {
-        $this->assertTrue(true);
+
+        $postdata = array('leagueId' => 11);
+        $this->client->request('PUT', '/api/team/5', $postdata);
+        $response = $this->client->getResponse();
+        $this->assertEquals(421, $response->getStatusCode());
+
+
     }
 
+    public function testUpdateTeam()
+    {
+        $postdata=array('name'=>"Test Team",'strip'=>"Some Strip",'leagueId'=>11);
+        $this->client->request('PUT', '/api/team/5',$postdata);
+        $response = $this->client->getResponse();
+        $this->assertTrue(
+            $response->isSuccessful(),
+            'response status is 2xx'
+        );
 
+        $this->assertTrue(
+            $response->headers->contains(
+                'Content-Type',
+                'application/json'
+            ),
+            'the "Content-Type" header is "application/json"' // optional message shown on failure
+        );
+    }
 
-
-
+    public function testDeleteTeam()
+    {
+        $this->client->request('DELETE', '/api/team/5');
+        $response = $this->client->getResponse();
+        $this->assertTrue(
+            $response->isSuccessful(),
+            'response status is 2xx'
+        );
+    }
 
 }
