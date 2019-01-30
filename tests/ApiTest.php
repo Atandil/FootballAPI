@@ -19,12 +19,16 @@ class ApiTest extends WebTestCase
     private $em;
     private $client;
 
+    /**
+     * Prepare and clean database
+     */
     protected function setUp()
     {
         parent::setUp(); //
         $this->client = static::createClient();
         $container = $this->client->getContainer();
         $entityManager = $container->get('doctrine')->getManager();
+        $this->em=$entityManager;
 
 
         $loader = new Loader();
@@ -47,6 +51,9 @@ class ApiTest extends WebTestCase
     4.	Delete a football league
     */
 
+    /**
+     * Test get team from non existen league
+     */
     public function testGetTeamsBadLeague()
     {
         $this->client->request('GET', '/api/teams/NonExitestLeague');
@@ -54,6 +61,9 @@ class ApiTest extends WebTestCase
         $this->assertEquals(404, $response->getStatusCode());
     }
 
+    /**
+     * Get team in leage
+     */
     public function testGetTeamsExistingLeague()
     {
         $this->client->request('GET', '/api/teams/Premier League');
@@ -69,7 +79,10 @@ class ApiTest extends WebTestCase
         );
     }
 
-        public function testCreateTeam()
+    /**
+     *  Create team
+     */
+    public function testCreateTeam()
         {
             $postdata=array('name'=>"Test Team",'strip'=>"Some Strip");
             $this->client->request('POST', '/api/createteam/2',$postdata);
@@ -88,6 +101,9 @@ class ApiTest extends WebTestCase
             );
         }
 
+    /**
+     * Create team without name
+     */
     public function testUpdateTeamBadData()
     {
 
@@ -99,6 +115,9 @@ class ApiTest extends WebTestCase
 
     }
 
+    /**
+     * Update team
+     */
     public function testUpdateTeam()
     {
         $postdata=array('name'=>"Test Team",'strip'=>"Some Strip",'leagueId'=>11);
@@ -118,6 +137,9 @@ class ApiTest extends WebTestCase
         );
     }
 
+    /**
+     * Delete team
+     */
     public function testDeleteTeam()
     {
         $this->client->request('DELETE', '/api/team/5');
