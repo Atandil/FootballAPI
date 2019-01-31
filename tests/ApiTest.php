@@ -8,6 +8,7 @@
 
 namespace App\Test;
 
+use App\DataFixtures\UserFixtures;
 use Doctrine\Common\DataFixtures\Executor\ORMExecutor;
 use Doctrine\Common\DataFixtures\Loader;
 use Doctrine\Common\DataFixtures\Purger\ORMPurger;
@@ -33,6 +34,7 @@ class ApiTest extends WebTestCase
 
         $loader = new Loader();
         $loader->addFixture(new TeamFixtures());
+        $loader->addFixture(new UserFixtures());
 
         $purger = new ORMPurger();
         $purger->setPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE);

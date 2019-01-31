@@ -1,0 +1,26 @@
+security:
+    encoders:
+        App\Entity\User:
+            algorithm: argon2i
+
+    # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
+    providers:
+        user_provider:
+            entity:
+                class: App\Entity\User
+        # used to reload user from session & other features (e.g. switch_user)
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        api:
+            pattern: ^/api/
+            guard:
+                authenticators:
+                    - App\Security\JwtTokenAuthenticator
+        main:
+            anonymous: true
+            json_login:
+                check_path: /token/json
+
+
