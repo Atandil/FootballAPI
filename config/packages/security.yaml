@@ -15,11 +15,14 @@ security:
             security: false
         api:
             pattern: ^/api/
+            anonymous: false
+            stateless: true
             guard:
                 authenticators:
                     - App\Security\JwtTokenAuthenticator
         main:
             anonymous: true
+            stateless: true
             json_login:
                 check_path: /token/json
 

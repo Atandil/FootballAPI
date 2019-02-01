@@ -14,6 +14,7 @@ use Doctrine\Common\DataFixtures\Loader;
 use Doctrine\Common\DataFixtures\Purger\ORMPurger;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use App\DataFixtures\TeamFixtures;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
 
 class ApiTest extends WebTestCase
 {
@@ -31,18 +32,15 @@ class ApiTest extends WebTestCase
         $entityManager = $container->get('doctrine')->getManager();
         $this->em=$entityManager;
 
-
-        $loader = new Loader();
-        $loader->addFixture(new TeamFixtures());
-        $loader->addFixture(new UserFixtures());
-
-        $purger = new ORMPurger();
-        $purger->setPurgeMode(ORMPurger::PURGE_MODE_TRUNCATE);
-        $executor = new ORMExecutor($entityManager, $purger);
-        $executor->purge();
+        //Preprare fresh database
+        $teamFixture=new TeamFixtures();
+        $entityManager->getConnection()->exec("delete from team;");
+        $entityManager->getConnection()->exec("delete from league;");
         $entityManager->getConnection()->exec("delete from sqlite_sequence where name='team';");
         $entityManager->getConnection()->exec("delete from sqlite_sequence where name='league';");
-        $executor->execute($loader->getFixtures(), true);
+        $teamFixture->load($entityManager);
+
+        //prepare Auth Token
 
 
     }
@@ -52,6 +50,16 @@ class ApiTest extends WebTestCase
     3.	Replace all attributes of a football team
     4.	Delete a football league
     */
+
+    /**
+     * Test get team from non existen league
+     */
+    public function testNoAuthorized()
+    {
+        $this->client->request('GET', '/api/teams/test');
+        $response = $this->client->getResponse();
+        $this->assertEquals(401, $response->getStatusCode());
+    }
 
     /**
      * Test get team from non existen league

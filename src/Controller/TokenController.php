@@ -6,6 +6,8 @@ use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoder;
+use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 
 class TokenController extends AbstractController
 {
@@ -22,23 +24,20 @@ class TokenController extends AbstractController
     /**
      * Get new JWT token
      * Auth using POST
-     * @Route("/token/get", methods={"POST"}, name="get_auth_token")
+     * @Route("/token/get", methods={"POST"}, name="get_token")
      */
-    public function getToken(Request $request, UserRepository $userRepository)
+    public function getToken(Request $request, UserRepository $userRepository,  UserPasswordEncoderInterface $passwordEncoder)
     {
         $username = $request->request->get('username');
         $password = $request->request->get('password');
 
         $user=$userRepository ->findOneBy(['email' => $request->request->get('username')]);
 
-        echo $request->request->get('password');
-        echo  $user->getPassword();
-
-        $isValid = $this->get('security.password_encoder')
+        $isValid = $passwordEncoder
             ->isPasswordValid($user,$request->request->get('password'));
         var_dump($isValid);
 
-        if(!$user || $user->getPassword()!=$request->request->get('password'))
+        if(!$isValid)
         {
             return $this->json(["error"=>"Invalid credentials."],401);
         }
@@ -53,7 +52,7 @@ class TokenController extends AbstractController
 
     /**
      * Auth using Json
-     * @Route("/token/json", methods={"POST"}, name="get_authjson_token")
+     * @Route("/token/json", methods={"POST"}, name="get_token_json_auth")
      */
     public function getTokenJson(Request $request)
     {
