@@ -8,6 +8,8 @@
 namespace App\Security;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\JWT;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -46,19 +48,17 @@ class JwtTokenAuthenticator extends AbstractGuardAuthenticator
         return $headerParts[1];
 
     }
-    public function getUser($credentials, UserProviderInterface $userProvider)
+    public function getUser($token, UserProviderInterface $userProvider)
     {
 
-        if(!$credentials) return false;
+        if(!$token) return false;
 
 
-
-        // TODO: Implement JWT
-        $username="admin@gov.uk";
+        $credentials = JWT::decode($token, getenv('JWT_SECRET'), ['HS256']);
 
         return $this->em
             ->getRepository(User::class)
-            ->findOneBy(['email' => $username]);
+            ->findOneBy(['email' => $credentials->sub]);
 
 
 
