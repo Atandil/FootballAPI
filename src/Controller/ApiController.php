@@ -9,10 +9,13 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use App\Repository\LeagueRepository;
+use App\Service\TeamService;
+
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class ApiController extends AbstractController
 {
+
     /**
      * @Route("/api/teams/{leagueName}", methods={"GET"}, name="api_team_list")
      */
@@ -34,20 +37,19 @@ class ApiController extends AbstractController
     }
 
     /**
+     * Create team in League (get league id )
      * @Route("/api/createteam/{id}", methods={"POST"}, name="api_team_create", requirements={"id"="\d+"})
      */
-    public function teamCreate(Request $request, League $league)
+    public function teamCreate(Request $request, TeamService $teamService,  League $league)
     {
 
         try {
-            $team = new  Team();
-            $team->setName($request->request->get('name'));
-            $team->setStrip($request->request->get('strip'));
-            $team->setLeague($league);
+            $data = [
+                'name' => $request->request->get('name'),
+                'strip' => $request->request->get('strip')
+            ];
+            $team=$teamService->createTeam($data,$league);
 
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($team);
-            $entityManager->flush();
             return $this->json(array(
                 'status' => 'Success',
                 'team' => self::teamPrepare($team)));
@@ -63,32 +65,21 @@ class ApiController extends AbstractController
     /**
      * @Route("/api/team/{id}", methods={"PUT"}, name="api_team_update")
      */
-    public function teamUpdate(Request $request, LeagueRepository $leagueRepository, Team $team)
+    public function teamUpdate(Request $request, TeamService $teamService, Team $team)
     {
-
-        if(!$request->request->has('name')) {
-            return $this->json(
-                array('error' => 'Minimum name needed'),
-                421
-            );
-        }
-
         try {
-            $team->setName($request->request->get('name'));
-            $team->setName($request->request->get('strip'));
-            $leagueId = $request->request->get('leagueId');
-            if ($leagueId && $league = $leagueRepository->find($leagueId)) {
-                $team->setLeague($league);
-            }
+            $data =[
+                'name' => $request->request->get('name'),
+                'strip' =>$request->request->get('strip'),
+                'leagueId' => $request->request->get('leagueId'),
+                ];
 
-            $entityManager = $this->getDoctrine()->getManager();
-            $entityManager->persist($team);
-            $entityManager->flush();
+            $updatedTeam=$teamService->updateTeam($team,$data);
 
             return $this->json(
                 array(
                     'status' => 'Success',
-                    'team'   => self::teamPrepare($team)
+                    'team'   => self::teamPrepare($updatedTeam)
                 )
             );
         } catch (\Exception $e) {
