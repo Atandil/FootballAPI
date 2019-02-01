@@ -19,7 +19,6 @@ use Symfony\Component\Security\Core\User\UserProviderInterface;
 
 class JwtTokenAuthenticator extends AbstractGuardAuthenticator
 {
-    private $extractor;
     private $em;
 
     public function __construct(EntityManagerInterface $em)
@@ -49,6 +48,10 @@ class JwtTokenAuthenticator extends AbstractGuardAuthenticator
     }
     public function getUser($credentials, UserProviderInterface $userProvider)
     {
+
+        if(!$credentials) return false;
+
+
 
         // TODO: Implement JWT
         $username="admin@gov.uk";
